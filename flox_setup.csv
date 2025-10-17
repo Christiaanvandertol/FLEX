@@ -1,0 +1,9 @@
+lat,43, latitude, degrees
+lon,11, longitude, degrees
+timezone,0, timezone, hours east of UTC
+vza,0, viewing zenith angle, degrees
+vaa,0, viewing azimuth angle (this is only relevant if vza is not zero), degrees
+fwhmfull,1, full with half max of the broadband spectrometer, nm
+
+
+
