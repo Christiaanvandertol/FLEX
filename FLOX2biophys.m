@@ -1,4 +1,4 @@
-function Out = FLOX2biophys(path_FLOXdata,option,pathSCOPE, path_settings)
+function Out = FLOX2biophys(path_FLOXdata,path_SIFdata,option,pathSCOPE, path_settings)
 % FLOX2biophys retrieves biophysical parameters from FLOX data
 % authors: Christiaan van der Tol (c.vandertoL@utwente.nl) and Egor
 % Prikaziuk (e.prikaziuk@utwente.nl)
@@ -81,7 +81,9 @@ end
 Efiles          = dir([path_FLOXdata '*inc*rad*Full*']);
 Lfiles          = dir([path_FLOXdata '*refl*rad*Full*']);
 ufiles          = dir([path_FLOXdata '*refl*unc*Full*']);
-SIFfiles        = dir([path_FLOXdata '*SFMfluor*']);
+SIFfiles        = dir([path_SIFdata '*FLOX_SIF_allmeas*.txt']);
+SIFuncfiles     = dir([path_SIFdata '*FLOX_SIF_uncertainty_allmeas*.txt']);
+
 
 if isempty(Efiles)
     error(['no irradiance file found in ' path_FLOXdata])
@@ -93,16 +95,26 @@ if isempty(ufiles)
     warning(['no reflectance uncertainty file found in ' path_FLOXdata, ' ,using dummy instead'])
 end
 if isempty(SIFfiles)
-    warning(['no SIF data file found in ' path_FLOXdata, ' ,not calculating FQE'])
+    warning(['no SIF data file found in ' path_SIFdata, ' ,not calculating FQE'])
 end
 
-[E, t, piL,r_unc,sif] = deal([]);
-
+[E, t, piL,r_unc,SIF,SIF_unc,tiSIF] = deal([]);
 for fileno = 1:length(Efiles)
     Efilename   = [path_FLOXdata '/' Efiles(fileno).name];
     Lfilename    = [path_FLOXdata '/' Lfiles(fileno).name];
     if ~isempty(SIFfiles)
-        SIFfilename    = [path_FLOXdata '/' SIFfiles(fileno).name];
+        if length(SIFfiles)==length(Efiles) || fileno == 1
+            SIFfilename         = [path_SIFdata '/' SIFfiles(fileno).name];
+            SIFuncfilename      = [path_SIFdata '/' SIFuncfiles(fileno).name];
+            [wlSIF, SIFi,tiSIFi]    = readFXBox(SIFfilename);
+            [~, SIF_unci]    = readFXBox(SIFuncfilename);
+
+            SIF_unci(isnan(SIF_unci)) = .2*SIFi(isnan(SIF_unci));
+            kk = find(~isnan(nanmean(SIFi))); %#ok<NANMEAN>
+            tiSIFi = tiSIFi(kk);
+            SIFi = SIFi(:,kk);
+            SIF_unci = SIF_unci(:,kk);
+        end
     end
     if ~isempty(ufiles)
         ufilename       = [path_FLOXdata '/' ufiles(fileno).name];
@@ -114,26 +126,37 @@ for fileno = 1:length(Efiles)
         [~, r_unci]        = readFXBox(ufilename,numchar,formati);
         r_unc   = [r_unc r_unci];
     end
-    if ~isempty(SIFfiles)
-        [wlSIF, SIF]    = readFXBox(SIFfilename,numchar,formati);
-        sif             = interp1(wlSIF,SIF,spectral.wlF,method,0);
-        sif     = [sif sifi];
-        calcFQE = 1;
-    else
-        calcFQE = 0; % uncomment following lines for debugging only
-        %calcFQE = 1;
-        %SIF = r; % dummy SIF for testing
-        %sif                = interp1(wl,SIF,spectral.wlF,method,0);
-    end
     t       = [t; ti];
     E       = [E  Ei];
     piL     = [piL  piLi];
+    if length(SIFfiles)==length(Efiles)
+        SIF     = [SIF SIFi];
+        SIF_unc = [SIF_unc SIF_unci];
+        tiSIF   = [tiSIF tiSIFi];
+    else
+        SIF     = SIFi;
+        SIF_unc = SIF_unci;
+        tiSIF   = tiSIFi;
+    end
+end
+
+if ~isempty(SIFfiles)
+    sif_m           = interp1(wlSIF,SIF,spectral.wlF,method,0);
+    sif_unc         = interp1(wlSIF,SIF_unc,spectral.wlF,method,0);
+    [tiSIF2,I]      = unique(tiSIF);
+    sif             = sif_m(:,I)';
+    sif_unc         = sif_unc(:,I)';
+    sif             = interp1(tiSIF2,sif,t)';
+    sif_unc         = interp1(tiSIF2,sif_unc,t)';
+    calcFQE = 1;
+else
+    calcFQE = 0; % uncomment following lines for debugging only
 end
 r               = piL./E; % reflectance
 r(r<0)          = NaN; % filtering, this is useful at at the edges of the spectrum or in low light conditions
 r(r>1)          = NaN;
 if isempty(r_unc)
-        r_unc           = 0.01+ .05*r;        % this is the uncertainty of the FLOX reflectance. This is a dummy value for now!!
+    r_unc           = 0.01+ .05*r;        % this is the uncertainty of the FLOX reflectance. This is a dummy value for now!!
 end
 
 I       = isnan(r);
@@ -146,12 +169,12 @@ if ~isempty(J)
     r       = r(:,J);
     t       = t(J);
     E       = E(:,J);
-    piL     = piL(:,J); 
+    piL     = piL(:,J);
     r_unc   = r_unc(:,J);
 
     % Unit conversion
     E       = E*1E3;            % from Wm-2nm-1 to Wm-2um-1
-    piL     = piL*1E3;          %#ok<NASGU> % from Wm-2nm-1 to Wm-2um-1 
+    piL     = piL*1E3;          %#ok<NASGU> % from Wm-2nm-1 to Wm-2um-1
 
     %% 5. calculate the angularity of the measurement setup.
     % This is needed in order to account for the BRDF
@@ -212,6 +235,7 @@ if ~isempty(J)
                 day(1).angles(k).time = (t(k)-floor(t(k)))*24;
                 if calcFQE
                     day(1).measurement(k).sif = sif(:,k);
+                    day(1).measurement(k).sif_unc = sif_unc(:,k);
                 end
             end
         case 1      % run one retrieval per day
@@ -238,6 +262,8 @@ if ~isempty(J)
                     if calcFQE
                         x = movmean(sif(:,I(J)),floor(length(I))/10,2);
                         day(d).measurement.sif = (interp1(t(I(J)), x', Interval))';
+                        x = movmean(sif_unc(:,I(J)),floor(length(I))/10,2);
+                        day(d).measurement.sif_unc = (interp1(t(I(J)), x', Interval))';
                     end
                 else                % if less than 11 measurements are available on this day
                     day(d).measurement.refl = refl(:,I);
@@ -263,7 +289,7 @@ if ~isempty(J)
             day(d).results(k) = out; %#ok<*AGROW>
             day(d).results(k).L2C.sza = day(d).angles.tts;
             day(d).results(k).L2C.time = day(d).angles.time;
-            x = day(d).angles.time; 
+            x = day(d).angles.time;
             day(d).results(k).L2C.t = datenum(['1-Jan' y(1)]) + uDoy(d) + x/24; %#ok<DATNM>
         end
         day(d).metadata=tab;

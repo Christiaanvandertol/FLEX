@@ -1,5 +1,6 @@
-function [er, refl, L2C,FSCOPE] = COST_4SAIL_multiple(p, measurement, tab, angles, ...
+function [out, refl, L2C,FSCOPE] = COST_4SAIL_multiple(p, minimize, measurement, tab, angles, ...
     spectral, optipar, pcf, atmo, meteo, constants, calcnetflux,stdPar,method)
+
 % COST_4SAIL_my
 % RETURNS
 %   er                          difference between modeled and measured reflectance + prior weight
@@ -36,7 +37,6 @@ leafbio.fqe = 0.01;
 leafopt = fluspect_mSCOPE(mly,spectral,leafbio,optipar, nl);
 %leafopt.refl(:, spectral.IwlT) = 0.01;
 %leafopt.tran(:, spectral.IwlT) = 0.01;
-
 
 %% soil reflectance - BSM
 soilemp.SMC   = 25;        % empirical parameter (fixed) [soil moisture content]
@@ -81,18 +81,26 @@ for k = 1:length(angles.tts)
     % rad.refl(:, k) = radk.refl;
     refl(:, k) = rad.refl;
 
-    if nargout>1
+    if ~minimize
         integr              = 'layers';
 
         Ps = gap.Ps(1:nl);
         Ph = (1-Ps);
         canopy.Pnsun_Cab    = canopy.LAI*meanleaf(canopy,rad.Pnu_Cab,integr,Ps); % net PAR Cab sunlit leaves (photons)
         canopy.Pnsha_Cab    = canopy.LAI*meanleaf(canopy,rad.Pnh_Cab,'layers',Ph); % net PAR Cab shaded leaves (photons)
+        
+        canopy.Pnsun        = canopy.LAI*meanleaf(canopy,rad.Pnu,integr,Ps); % net PAR Cab sunlit leaves (photons)
+        canopy.Pnsha        = canopy.LAI*meanleaf(canopy,rad.Pnh,'layers',Ph); % net PAR Cab shaded leaves (photons)
+
         canopy.Pntot_Cab    = canopy.Pnsun_Cab+canopy.Pnsha_Cab; % net PAR Cab leaves (photons)
+        canopy.Pntot        = canopy.Pnsun+canopy.Pnsha; % net PAR Cab leaves (photons)
+
         IwlPAR              = spectral.IwlPAR;
         %P                  = 0.001 * Sint((rad.Esun_(IwlPAR)+rad.Esun_(IwlPAR)),spectral.wlS(IwlPAR));
         %L2C.fAPARchl(k)     = canopy.Pntot_Cab./P; %#ok<*AGROW>
         L2C.fAPARchl(k)     = canopy.Pntot_Cab./rad.PAR; %#ok<*AGROW>
+        L2C.fAPAR(k)        = canopy.Pntot./rad.PAR; %#ok<*AGROW>
+        
         etau            = 1+0*rad.Pnu;
         etah            = 1+0*rad.Pnh;
         rad             = RTMf(constants,spectral,rad,soil,leafopt,canopy,gap,angles_i,etau,etah);
@@ -101,13 +109,16 @@ for k = 1:length(angles.tts)
         phi             = interp1(spectral.wlS,optipar.phi,spectral.wlF',method);
         EoutFrc_        = 1E-3*leafbio.fqe*ep.*(canopy.Pntot_Cab*phi); %1E-6: umol2mol, 1E3: nm-1 to um-1
         %EoutFrc     = 1E-3*Sint(EoutFrc_,spectral.wlF);
-        EoutFrc_(EoutFrc_<.01) = NaN;
+        %EoutFrc_(EoutFrc_<.01) = NaN;
         L2C.sigmaF(:,k)      = pi*rad.LoF_./EoutFrc_;
 
         if isfield(measurement,'sif')
             sifintm         = Sint(measurement.sif(:,k),spectral.wlF);
+            s_sifintm       = Sint(measurement.sif_unc(:,k),spectral.wlF);
             sifint          = Sint(rad.LoF_,spectral.wlF);
-            L2C.FQE(k)      = sifintm/sifint;
+            s_sifint        = 0;                        % SCOPE output uncertainty here.
+            L2C.FQE(k)      = sifintm/sifint*leafbio.fqe;
+           % L2C.FQE_unc(k)  = L2C.FQE(k).*sqrt( (s_sifintm./sifintm).^2 + (s_sifint./sifint).^2);
         end
     end
 
@@ -118,7 +129,7 @@ for k = 1:length(angles.tts)
     %%    rad.SIF(:,k) = SIF(640-399:850-399);
 end
 %% Biophysical data products FLEX ('L2C')
-if nargout>1
+if ~minimize
     %measured iPAR
     if size(measurement.Ein,2)>1
         Ein             = measurement.Ein_all;
@@ -144,12 +155,12 @@ if nargout>1
     ep              = constants.A*ephoton(spectral.wlF'*1E-9,constants);
 
     FSCOPE          = leafbio.fqe * phi*1E-3.*ep.*(sigmaF.*L2C.APARchl)';
+    %stdDiagn        = J2*xCov*J2';
 end
 
 %% calculate the difference between measured and modeled data
 er1 = (refl - measurement.refl - SIF_PCA./measurement.Ein)./measurement.sigmarefl;
 er1 = er1(~isnan(er1));
-
 
 %% add extra weight from prior information
 prior.Apm = tab.x0(tab.include);
@@ -158,4 +169,10 @@ er2 = (p - prior.Apm) ./ prior.Aps;
 
 %% total
 er = [er1(:); 3E-2* er2];
+
+if minimize
+    out = er;
+else
+    out = [mean(L2C.fAPAR), nanmean(L2C.fAPARchl), nanmean(L2C.FQE), nanmean(L2C.sigmaF,2)' ]'; %#ok<NANMEAN>
+end
 end
