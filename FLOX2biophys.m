@@ -23,6 +23,7 @@ function Out = FLOX2biophys(path_FLOXdata,path_SIFdata,option,pathSCOPE, path_se
 %% 1. paths
 %clear all %#ok<CLALL>
 % for compiler comment paths
+
 if ~exist('pathSCOPE','var')
     pathSCOPE = 'SCOPE'; % relative path to find SCOPE
 end
@@ -54,9 +55,6 @@ spectral.wlT    = 898:900; % dummy
 % the following part is Matlab specific
 
 method = 'spline';  % M2020a name
-if verLessThan('matlab', '9.8')
-    method = 'splines';
-end
 
 %% 3. some FLOX specific settings
 % this describes the header line of the FLOX data file.
@@ -64,15 +62,16 @@ end
 formati         = '%1c%d%1c%d';
 numchar         = 2;
 
+
 %% 4. read the settings for the retrieval
-tab             = read_input_sheet(path_settings);
+tab             = readInputSheet(path_settings);
 
 % read the FLOX setup
-setup           = readtable([path_settings 'flox_setup']);
-VarNames        = setup.Var1;
-VarValues       = setup.Var2;
-VarDescription  = setup.Var3; %#ok<NASGU>
-VarUnits        = setup.Var4; %#ok<NASGU>
+[A,B,~,~] = textread( [path_settings 'flox_setup.csv'], '%s %d %s %s' ,'delimiter' , ','); %#ok<DTXTRD>
+VarValues       = double(B);
+VarNames        = A;
+%VarDesription   = C;
+%VarUnits        = D;
 for k = 1:length(VarNames)
     FLOX.(VarNames{k}) = VarValues(k);
 end
@@ -104,13 +103,13 @@ for fileno = 1:length(Efiles)
     Lfilename    = [path_FLOXdata '/' Lfiles(fileno).name];
     if ~isempty(SIFfiles)
         if length(SIFfiles)==length(Efiles) || fileno == 1
-            SIFfilename         = [path_SIFdata '/' SIFfiles(fileno).name];
-            SIFuncfilename      = [path_SIFdata '/' SIFuncfiles(fileno).name];
-            [wlSIF, SIFi,tiSIFi]    = readFXBox(SIFfilename);
-            [~, SIF_unci]    = readFXBox(SIFuncfilename);
+            SIFfilename         = [path_SIFdata  SIFfiles(fileno).name];
+            SIFuncfilename      = [path_SIFdata  SIFuncfiles(fileno).name];
+          [wlSIF, SIFi,tiSIFi]    = readFXbox(SIFfilename);
+          [~, SIF_unci]    = readFXbox(SIFuncfilename);
 
             SIF_unci(isnan(SIF_unci)) = .2*SIFi(isnan(SIF_unci));
-            kk = find(~isnan(nanmean(SIFi))); %#ok<NANMEAN>
+            kk = find(~isnan(mean(SIFi, 'omitnan')));
             tiSIFi = tiSIFi(kk);
             SIFi = SIFi(:,kk);
             SIF_unci = SIF_unci(:,kk);
@@ -120,10 +119,10 @@ for fileno = 1:length(Efiles)
         ufilename       = [path_FLOXdata '/' ufiles(fileno).name];
     end
 
-    [wl, Ei, ti]        = readFXBox(Efilename,numchar,formati);
-    [~, piLi]           = readFXBox(Lfilename,numchar,formati);
+    [wl, Ei, ti]        = readFXbox(Efilename,numchar,formati);
+    [~, piLi]           = readFXbox(Lfilename,numchar,formati);
     if ~isempty(ufiles)
-        [~, r_unci]        = readFXBox(ufilename,numchar,formati);
+        [~, r_unci]        = readFXbox(ufilename,numchar,formati);
         r_unc   = [r_unc r_unci];
     end
     t       = [t; ti];
@@ -178,14 +177,15 @@ if ~isempty(J)
 
     %% 5. calculate the angularity of the measurement setup.
     % This is needed in order to account for the BRDF
+
     y               = datevec(t);
-    Doyt            = t-datenum(['1-Jan' y(1)]); %#ok<DATNM> The decimal Julian calender date
+    Doyt            = t-datenum(['1-Jan-' num2str(y(1))]); %#ok<DATNM> The decimal Julian calender date
     Doy             = floor(Doyt); % the Julian calander date
     time            = 24*(Doyt-Doy)+FLOX.timezone; % the time of the day in UTC
     [sza_rad,~,~,saa_rad]   = calczenithangle(Doy,time,0,0,FLOX.lon,FLOX.lat);
     angles.tts      = min(85,rad2deg(sza_rad));
-    angles.tto      = repmat(FLOX.vza,length(angles.tts),1);
-    angles.psi      = FLOX.vaa - rad2deg(saa_rad);
+    angles.tto      = single(repmat(single(FLOX.vza),length(angles.tts),1));
+    angles.psi      = FLOX.vaa - rad2deg(single(saa_rad));
 
     %% 6. fixed inputs
     % fluorescence principle components. The algorithm does not retrieve
@@ -193,9 +193,9 @@ if ~isempty(J)
     %  If true reflectance is aready input, then specify this in the settings and the below will not be used.
 
     pathPCflu       = fullfile(path_settings, 'PC_flu.csv');
-    PCflu           = readtable(pathPCflu, "NumHeaderLines", 2);
-    pcf             = table2array(PCflu);
-    pcf             = pcf(:, 2:5);
+    %PCflu           = csvread(pathPCflu);
+    PCflu           = dlmread(pathPCflu,',',1,0); %#ok<DLMRD>
+    pcf             = PCflu(2:end, 2:5);
 
     pathFluspectPar = fullfile([pathSCOPE '/input/fluspect_parameters/Optipar2021_ProspectPRO_CX.mat']);
     load(pathFluspectPar)  %#ok<LOAD> % optipar struct appears
@@ -290,7 +290,7 @@ if ~isempty(J)
             day(d).results(k).L2C.sza = day(d).angles.tts;
             day(d).results(k).L2C.time = day(d).angles.time;
             x = day(d).angles.time;
-            day(d).results(k).L2C.t = datenum(['1-Jan' y(1)]) + uDoy(d) + x/24; %#ok<DATNM>
+            day(d).results(k).L2C.t = datenum(['1-Jan-' num2str(y(1))]) + uDoy(d) + x/24; %#ok<DATNM>
         end
         day(d).metadata=tab;
     end

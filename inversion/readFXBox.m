@@ -1,19 +1,22 @@
-function [wl, data, time] = readFXBox(filename,numchar,formati,ID)
+function [wl, data, time] = readFXbox_Octave(filename,numchar,formati,ID)
+
 
 fileID = fopen(filename);
-T = readtable(filename, 'TreatAsEmpty', '#N/D','ReadVariableNames', 1);
+headerline = fgetl(fileID);
+x = dlmread(filename,';',1,0); %#ok<DLMRD>
+%T = readtable(filename, 'TreatAsEmpty', '#N/D','ReadVariableNames', 1);
 fclose(fileID);
-x = table2array(T);
+%x = table2array(T);
 wl = x(:,1);
 %data = x(:,2:Last+1);
 data = x(:,2:end);
 
 if nargin ==1
-    dates = T.Properties.VariableNames(2:end);
-    z = char(dates);
-    time = zeros(size(z,1),1);
-    for k = 1:size(z,1)
-        time(k) = datenum([z(k,2:3), '-' z(k,5:7), '-' z(k,9:12) ' ' z(k,13:14) ':' z(k,16:17) ':' z(k,19:20)]); %#ok<*DATNM>
+    %dates = T.Properties.VariableNames(2:end);
+    %z = char(dates);
+    time = zeros(size(data,2),1);
+    for k = 1:length(time)
+        time(k) = datenum(headerline(5+(k-1)*21:24+(k-1)*21));
     end
 else
     if nargin<2
@@ -82,7 +85,6 @@ else
         end
 
 
-
         %         ymd = z(8:7:end);
         %         dom = floor(ymd/1E4);
         %         mon = floor(ymd/1E2-dom*1E2);
@@ -103,11 +105,13 @@ else
 
 
     if ~exist('year', 'var')
-        time = datenum(0,0,0,hr,minute,sec); %#ok<*SAGROW>
+        time = datenum(0,0,0,hr,minute,sec); %#ok<*DATNM,*SAGROW>
     else
 
         time = datenum(year,mon,dom,hr,minute,sec); %#ok<*SAGROW>
     end
+
+
 
 end
 

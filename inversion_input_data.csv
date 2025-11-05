@@ -12,8 +12,8 @@
 1,Cx,0,-5,5,3.333333333,de-epoxydation state,
 1,N,1.5,0.8,3.5,0.9,mesophyll structure parameter,-
 1,LAI,3,0,7,2.333333333,canopy leaf area index,m2 m-2
-1,LIDFa,-0.35,-1,1,0.666666667,"leaf inclination distribution function parameters a, b",-
-1,LIDFb,-0.15,-1,1,0.666666667,,-
+1,LIDFa,-0.35,-1,1,0.666666667,leaf inclination distribution function parameters a,-
+1,LIDFb,-0.15,-1,1,0.666666667,leaf indication distribution function parameter b,-
 1,SIF_PC1,0,0,40,1.00E+09,sun induced fluorescence (fit only),
 ,SIF_PC2,0,-20,20,1.00E+09,sun induced fluorescence (fit only),
 ,SIF_PC3,0,-10,10,1.00E+09,sun induced fluorescence (fit only),

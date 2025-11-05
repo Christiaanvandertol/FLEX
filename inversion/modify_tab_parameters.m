@@ -7,7 +7,7 @@ function tab = modify_tab_parameters(tab)
     tab.lower(i_lai) = transform_lai(tab.lower(i_lai));
     tab.upper(i_lai) = transform_lai(tab.upper(i_lai));
     tab.uncertainty(i_lai) = transform_lai(tab.uncertainty(i_lai));
-    
+
     %% modify LIDFs
     % abs(LIDFa + LIDFb) <= 1
     % to make it possible LIDFa = LIDFa + LIDFb, LIDFb = LIDFa - LIDFb
@@ -17,5 +17,5 @@ function tab = modify_tab_parameters(tab)
     lidfb = tab.value(i_lidfb);
     tab.value(i_lidfa) = lidfa + lidfb;
     tab.value(i_lidfb) = lidfa - lidfb;
-    
+
 end

@@ -73,7 +73,7 @@ for k = 1:length(angles.tts)
     % radk   = models.RTMo_lite(soil, leafopt, canopy, angles_i);
 
     [rad,gap] = RTMo(spectral,atmo,soil,leafopt,canopy,angles_i,constants,meteo,options);
-    
+
     % rad.rdd(:,k) = radk.rdd;
     % rad.rsd(:,k) = radk.rsd;
     % rad.rdo(:,k) = radk.rdo;
@@ -88,7 +88,7 @@ for k = 1:length(angles.tts)
         Ph = (1-Ps);
         canopy.Pnsun_Cab    = canopy.LAI*meanleaf(canopy,rad.Pnu_Cab,integr,Ps); % net PAR Cab sunlit leaves (photons)
         canopy.Pnsha_Cab    = canopy.LAI*meanleaf(canopy,rad.Pnh_Cab,'layers',Ph); % net PAR Cab shaded leaves (photons)
-        
+
         canopy.Pnsun        = canopy.LAI*meanleaf(canopy,rad.Pnu,integr,Ps); % net PAR Cab sunlit leaves (photons)
         canopy.Pnsha        = canopy.LAI*meanleaf(canopy,rad.Pnh,'layers',Ph); % net PAR Cab shaded leaves (photons)
 
@@ -100,7 +100,7 @@ for k = 1:length(angles.tts)
         %L2C.fAPARchl(k)     = canopy.Pntot_Cab./P; %#ok<*AGROW>
         L2C.fAPARchl(k)     = canopy.Pntot_Cab./rad.PAR; %#ok<*AGROW>
         L2C.fAPAR(k)        = canopy.Pntot./rad.PAR; %#ok<*AGROW>
-        
+
         etau            = 1+0*rad.Pnu;
         etah            = 1+0*rad.Pnh;
         rad             = RTMf(constants,spectral,rad,soil,leafopt,canopy,gap,angles_i,etau,etah);
@@ -140,7 +140,7 @@ if ~minimize
         fAPARchl        = L2C.fAPARchl;
         sigmaF          = L2C.sigmaF;
     end
-    
+
     ep              = constants.A*ephoton(spectral.wlS(IwlPAR)*1E-9,constants);
     P               = 1E3*Sint(Ein(IwlPAR,:)./ep,spectral.wlS(IwlPAR));
 
@@ -173,6 +173,6 @@ er = [er1(:); 3E-2* er2];
 if minimize
     out = er;
 else
-    out = [mean(L2C.fAPAR), nanmean(L2C.fAPARchl), nanmean(L2C.FQE), nanmean(L2C.sigmaF,2)' ]'; %#ok<NANMEAN>
+    out = [mean(L2C.fAPAR), mean(L2C.fAPARchl, 'omitnan'), mean(L2C.FQE, 'omitnan'), mean(L2C.sigmaF,2, 'omitnan')' ]'; %#ok<NANMEAN>
 end
 end
