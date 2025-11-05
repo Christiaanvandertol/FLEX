@@ -148,13 +148,13 @@ if ~minimize
 
     FSCOPE          = leafbio.fqe * phi*1E-3.*ep.*(sigmaF.*L2C.APARchl)';
     %stdDiagn        = J2*xCov*J2';
-    if isfield(measurement,'sif') 
+    if isfield(measurement,'sif')
        % for k = 1:length(measurement.t_all)
         sifintm         = Sint(measurement.sif,spectral.wlF);
         s_sifintm       = Sint(measurement.sif_unc,spectral.wlF);
         sifint          = Sint(FSCOPE,spectral.wlF);
         L2C.FQE       =  sifintm./sifint*leafbio.fqe;
-        L2C.FQE_unc   = L2C.FQE(k).*abs( (s_sifintm./sifintm)); 
+        L2C.FQE_unc   = L2C.FQE(k).*abs( (s_sifintm./sifintm));
         % this is the contribution from SIF to the uncertainty.
         % Contribution from SCOPE inversion is added later (in fit_spectra)
     end
@@ -175,6 +175,10 @@ er = [er1(:); 3E-2* er2];
 if minimize
     out = er;
 else
-    out = [mean(L2C.fAPAR), mean(L2C.fAPARchl, 'omitnan'), mean(L2C.FQE, 'omitnan'), mean(L2C.sigmaF,2, 'omitnan')' ]'; 
+    if isfield(measurement,'sif')
+        out = [mean(L2C.fAPAR), mean(L2C.fAPARchl, 'omitnan'), mean(L2C.FQE, 'omitnan'), mean(L2C.sigmaF,2, 'omitnan')' ]';
+    else
+        out = [mean(L2C.fAPAR), mean(L2C.fAPARchl, 'omitnan'), mean(L2C.sigmaF,2, 'omitnan')' ]';
+    end
 end
 end

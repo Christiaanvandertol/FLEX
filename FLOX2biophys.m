@@ -128,14 +128,16 @@ for fileno = 1:length(Efiles)
     t       = [t; ti];
     E       = [E  Ei];
     piL     = [piL  piLi];
-    if length(SIFfiles)==length(Efiles)
-        SIF     = [SIF SIFi];
-        SIF_unc = [SIF_unc SIF_unci];
-        tiSIF   = [tiSIF tiSIFi];
-    else
-        SIF     = SIFi;
-        SIF_unc = SIF_unci;
-        tiSIF   = tiSIFi;
+    if ~isempty(SIFfiles)
+        if length(SIFfiles)==length(Efiles)
+            SIF     = [SIF SIFi];
+            SIF_unc = [SIF_unc SIF_unci];
+            tiSIF   = [tiSIF tiSIFi];
+        else
+            SIF     = SIFi;
+            SIF_unc = SIF_unci;
+            tiSIF   = tiSIFi;
+        end
     end
 end
 
@@ -266,7 +268,7 @@ if ~isempty(J)
                         %x = movmean(sif_unc(:,I(J)),floor(length(I))/10,2);
                         %day(d).measurement.sif_unc = interp1(t(I(J)), x', Interval))';
                         day(d).measurement.sif_unc = sif_unc(:,I);
-                        
+
                     end
                 else                % if less than 11 measurements are available on this day
                     day(d).measurement.refl = refl(:,I);

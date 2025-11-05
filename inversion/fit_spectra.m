@@ -61,8 +61,10 @@ stdDiagnostic       = sqrt(diag(varDiagnostic));
 %results.rad = rad;
 L2C.fAPAR_unc       = stdDiagnostic(1);
 L2C.fAPARchl_unc    = stdDiagnostic(2);
-L2C.FQE_unc         = sqrt(L2C.FQE_unc.^2 + stdDiagnostic(3).^2);
-L2C.sigmaF_unc      = stdDiagnostic(4:end);
+if isfield(measurement,'sif')
+    L2C.FQE_unc         = sqrt(L2C.FQE_unc.^2 + stdDiagnostic(3).^2);
+end
+L2C.sigmaF_unc      = stdDiagnostic(3+isfield(measurement,'sif'):end);
 
 
 results.residual    = sqrt(er'*er);
