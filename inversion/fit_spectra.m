@@ -47,7 +47,7 @@ stdPar = sqrt(diag(full(xCov)));
 results = struct();
 tab.value(tab.include) = paramsout;
 
-results.parameters = demodify_parameters(tab.value, tab.variable);
+%results.parameters = demodify_parameters(tab.value, tab.variable);
 
 %% best-fittiing spectra
 f = @(params)COST_4SAIL_multiple(params, 0, measurement, tab, angles, ...
@@ -67,9 +67,9 @@ end
 L2C.sigmaF_unc      = stdDiagnostic(3+isfield(measurement,'sif'):end);
 
 
-results.residual    = sqrt(er'*er);
-results.Jacobian    = J;
-results.L2C         = L2C;
+%results.residual    = sqrt(er'*er);
+%results.Jacobian    = J;
+results.L2biophys         = L2C;
 results.FSCOPE      = FSCOPE;
 results.RSCOPE      = RSCOPE;
 

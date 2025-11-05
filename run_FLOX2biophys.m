@@ -11,9 +11,10 @@ for k = 1:1%length(subdir)
     for j = 1:1%length(subsubdir)
         path_FLOX = [direc subdir(k).name '\' subsubdir(j).name '\'];
         path_specfit = path_FLOX; % I placed the SIF in the same folder as the Reflectance
-        L2C_retrieval = FLOX2biophys(path_FLOX,path_specfit,1);
+        L2valdata = FLOX2biophys(path_FLOX,path_specfit,0);
         filename = [direc subdir(k).name '\' subsubdir(j).name '\' subdir(k).name '_' subsubdir(j).name '_retrieval.nc'];
         %writeL2C(filename,L2C_retrieval)
-        save( ['output\' subdir(k).name '_' subsubdir(j).name '_retrieval.mat'],'L2C_retrieval')
+        save( ['output\' subdir(k).name '_' subsubdir(j).name '_L2valdata.mat'],'L2valdata')
     end
 end
+r

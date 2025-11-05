@@ -231,6 +231,7 @@ if ~isempty(J)
                 day(1).measurement(k).refl = refl(:,k);
                 day(1).measurement(k).sigmarefl = refl_unc(:,k);
                 day(1).measurement(k).Ein = Ein(:,k);
+                day(1).measurement(k).t_all = t(k);
                 day(1).angles(k).tts = angles.tts(k);
                 day(1).angles(k).tto = angles.tto(k);
                 day(1).angles(k).psi = angles.psi(k);
@@ -292,11 +293,16 @@ if ~isempty(J)
         for k = 1:length(day(d).angles)
             out = fit_spectra(measurement(k), tab, angles(k), ...
                 spectral, optipar, pcf, atmo, meteo, constants, method);
-            day(d).results(k) = out; %#ok<*AGROW>
-            day(d).results(k).L2C.sza = day(d).angles.tts;
-            day(d).results(k).L2C.time = day(d).angles.time;
+            day(d).results(k).L2biophys = out.L2biophys; %#ok<*AGROW>
+            day(d).results(k).FSCOPE = out.FSCOPE;
+            day(d).results(k).RSCOPE = out.RSCOPE;
+            day(d).results(k).L2biophys.sza = day(d).angles.tts;
+            day(d).results(k).L2biophys.dec_hrs = day(d).angles.time;
+            day(d).results(k).L2biophys.time_full = datestr(day(d).measurement(k).t_all); %#ok<DATST>
+            day(d).results(k).wlR = spectral.wlP;
+            day(d).results(k).wlF = spectral.wlF;
             x = day(d).angles.time;
-            day(d).results(k).L2C.t = datenum(['1-Jan-' num2str(y(1))]) + uDoy(d) + x/24; %#ok<DATNM>
+            day(d).results(k).L2biophys.t = datestr(datenum(['1-Jan-' num2str(y(1))]) + uDoy(d) + x/24); %#ok<DATST,DATNM>
         end
         day(d).metadata=tab;
     end
