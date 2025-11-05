@@ -111,15 +111,6 @@ for k = 1:length(angles.tts)
         %EoutFrc     = 1E-3*Sint(EoutFrc_,spectral.wlF);
         %EoutFrc_(EoutFrc_<.01) = NaN;
         L2C.sigmaF(:,k)      = pi*rad.LoF_./EoutFrc_;
-
-        if isfield(measurement,'sif')
-            sifintm         = Sint(measurement.sif(:,k),spectral.wlF);
-            s_sifintm       = Sint(measurement.sif_unc(:,k),spectral.wlF);
-            sifint          = Sint(rad.LoF_,spectral.wlF);
-            s_sifint        = 0;                        % SCOPE output uncertainty here.
-            L2C.FQE(k)      = sifintm/sifint*leafbio.fqe;
-           % L2C.FQE_unc(k)  = L2C.FQE(k).*sqrt( (s_sifintm./sifintm).^2 + (s_sifint./sifint).^2);
-        end
     end
 
     %  %rad(k) = radk; %#ok<AGROW>
@@ -128,6 +119,7 @@ for k = 1:length(angles.tts)
            SIF_PCA(:,k) = interp1(640-399:850-399,SIFi,spectral.wlS,'linear',0);
     %%    rad.SIF(:,k) = SIF(640-399:850-399);
 end
+
 %% Biophysical data products FLEX ('L2C')
 if ~minimize
     %measured iPAR
@@ -140,7 +132,7 @@ if ~minimize
         fAPARchl        = L2C.fAPARchl;
         sigmaF          = L2C.sigmaF;
     end
-
+    sigmaF(isnan(sigmaF))=0;
     ep              = constants.A*ephoton(spectral.wlS(IwlPAR)*1E-9,constants);
     P               = 1E3*Sint(Ein(IwlPAR,:)./ep,spectral.wlS(IwlPAR));
 
@@ -156,6 +148,16 @@ if ~minimize
 
     FSCOPE          = leafbio.fqe * phi*1E-3.*ep.*(sigmaF.*L2C.APARchl)';
     %stdDiagn        = J2*xCov*J2';
+    if isfield(measurement,'sif') 
+       % for k = 1:length(measurement.t_all)
+        sifintm         = Sint(measurement.sif,spectral.wlF);
+        s_sifintm       = Sint(measurement.sif_unc,spectral.wlF);
+        sifint          = Sint(FSCOPE,spectral.wlF);
+        L2C.FQE       =  sifintm./sifint*leafbio.fqe;
+        L2C.FQE_unc   = L2C.FQE(k).*abs( (s_sifintm./sifintm)); 
+        % this is the contribution from SIF to the uncertainty.
+        % Contribution from SCOPE inversion is added later (in fit_spectra)
+    end
 end
 
 %% calculate the difference between measured and modeled data
@@ -173,6 +175,6 @@ er = [er1(:); 3E-2* er2];
 if minimize
     out = er;
 else
-    out = [mean(L2C.fAPAR), mean(L2C.fAPARchl, 'omitnan'), mean(L2C.FQE, 'omitnan'), mean(L2C.sigmaF,2, 'omitnan')' ]'; %#ok<NANMEAN>
+    out = [mean(L2C.fAPAR), mean(L2C.fAPARchl, 'omitnan'), mean(L2C.FQE, 'omitnan'), mean(L2C.sigmaF,2, 'omitnan')' ]'; 
 end
 end

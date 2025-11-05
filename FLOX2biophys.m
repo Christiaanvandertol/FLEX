@@ -105,8 +105,8 @@ for fileno = 1:length(Efiles)
         if length(SIFfiles)==length(Efiles) || fileno == 1
             SIFfilename         = [path_SIFdata  SIFfiles(fileno).name];
             SIFuncfilename      = [path_SIFdata  SIFuncfiles(fileno).name];
-          [wlSIF, SIFi,tiSIFi]    = readFXbox(SIFfilename);
-          [~, SIF_unci]    = readFXbox(SIFuncfilename);
+            [wlSIF, SIFi,tiSIFi]    = readFXbox(SIFfilename);
+            [~, SIF_unci]    = readFXbox(SIFuncfilename);
 
             SIF_unci(isnan(SIF_unci)) = .2*SIFi(isnan(SIF_unci));
             kk = find(~isnan(mean(SIFi, 'omitnan')));
@@ -260,10 +260,13 @@ if ~isempty(J)
                     day(d).angles.tto = repmat(angles.tto(1),length(Interval),1); % this doesn't change
                     day(d).angles.time = (Interval-floor(Interval))*24;
                     if calcFQE
-                        x = movmean(sif(:,I(J)),floor(length(I))/10,2);
-                        day(d).measurement.sif = (interp1(t(I(J)), x', Interval))';
-                        x = movmean(sif_unc(:,I(J)),floor(length(I))/10,2);
-                        day(d).measurement.sif_unc = (interp1(t(I(J)), x', Interval))';
+                        %x = movmean(sif(:,I(J)),floor(length(I))/10,2);
+                        %day(d).measurement.sif = (interp1(t(I(J)), x', Interval))';
+                        day(d).measurement.sif = sif(:,I);
+                        %x = movmean(sif_unc(:,I(J)),floor(length(I))/10,2);
+                        %day(d).measurement.sif_unc = interp1(t(I(J)), x', Interval))';
+                        day(d).measurement.sif_unc = sif_unc(:,I);
+                        
                     end
                 else                % if less than 11 measurements are available on this day
                     day(d).measurement.refl = refl(:,I);
@@ -275,6 +278,7 @@ if ~isempty(J)
                     day(d).angles.time = (t(I)-floor(t(I(1))))*24;
                     if calcFQE
                         day(d).measurement.sif = sif(:,I);
+                        day(d).measurement.sif_unc = sif_unc(:,I);
                     end
                 end
             end

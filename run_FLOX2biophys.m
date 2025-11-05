@@ -8,6 +8,8 @@ for k = 1:1%length(subdir)
     for j = 1:1%length(subsubdir)
         path_FLOX = [direc subdir(k).name '\' subsubdir(j).name '\'];
         L2C_retrieval = FLOX2biophys(path_FLOX,path_specfit,1);
+        filename = [direc subdir(k).name '\' subsubdir(j).name '\' subdir(k).name '_' subsubdir(j).name '_retrieval.nc'];
+        %writeL2C(filename,L2C_retrieval)
         save( [direc subdir(k).name '\' subsubdir(j).name '\' subdir(k).name '_' subsubdir(j).name '_retrieval.mat'],'L2C_retrieval')
     end
 end

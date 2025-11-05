@@ -1,4 +1,4 @@
-function [wl, data, time] = readFXbox_Octave(filename,numchar,formati,ID)
+function [wl, data, time] = readFXBox(filename,numchar,formati,ID)
 
 
 fileID = fopen(filename);
