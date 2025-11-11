@@ -17,7 +17,7 @@ params0 = tab.value(iparams);
 lb = tab.lower(iparams);
 ub = tab.upper(iparams);
 
-stoptol = 1E-2;  %
+stoptol = 1E-4;  %
 %opt = optimset('MaxIter', 120, 'TolFun', stoptol, ...
 %               'DiffMinChange', 1E-4); % works for float32 input
 %                % 'Display', 'iter');
@@ -27,7 +27,6 @@ opt = optimset('MaxIter', 100, 'TolFun', stoptol);%, 'DiffMinChange', 1E-4); % w
 %% function minimization
 f = @(params)COST_4SAIL_multiple(params, 1, measurement, tab, angles, ...
     spectral, optipar, pcf, atmo, meteo, constants,0);
-
 if any(tab.include)  % analogy of any(include == 1)
     tic
     [paramsout,Resnorm,FVAL,exitflag,output,~,J]= lsqnonlin(f, params0, lb, ub, opt); %#ok<ASGLU>
@@ -35,13 +34,16 @@ if any(tab.include)  % analogy of any(include == 1)
 else % skip minimization and get resuls of RTMo_lite run with initial  parameters (param0)
     paramsout = params0;
 end
-er = f(paramsout);
-
+%er = f(paramsout);
 %   s = [measurement.sigmarefl(:); tab.uncertainty(tab.include)];
 
-xCov = inv(J.'*J)*Resnorm/(numel(FVAL)-numel(paramsout)); %#ok<MINV>
-stdPar = sqrt(diag(full(xCov)));
-%  stdPar = abs((inv(J.'*J)) * J.' * s);
+xCov = inv(J'*J)* (Resnorm/(numel(FVAL)-numel(paramsout))); %#ok<MINV>
+
+Js = J(1:end-numel(paramsout),:);
+
+stdPar0 = inv(Js'*Js)*Js'*measurement.sigmarefl(:);
+stdPar1 = sqrt(diag(full(xCov)));
+stdPar = sqrt(stdPar0.^2 + stdPar1.^2);
 
 %% best-fitting parameters
 results = struct();
@@ -66,15 +68,13 @@ if isfield(measurement,'sif')
 end
 L2C.sigmaF_unc      = stdDiagnostic(3+isfield(measurement,'sif'):end);
 
-
-%results.residual    = sqrt(er'*er);
-%results.Jacobian    = J;
 results.L2biophys         = L2C;
 results.FSCOPE      = FSCOPE;
 results.RSCOPE      = RSCOPE;
 
-% uncertainties of diagnostic outputs
-
+% obsolete outputs
+%results.residual    = sqrt(er'*er);
+%results.Jacobian    = J;
 % results.rmse = rmse;
 % results.refl_mod = reflSAIL;
 % results.sif = fluo.SIF;

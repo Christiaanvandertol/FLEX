@@ -14,7 +14,6 @@ canopy = table_to_struct(tab, 'canopy');
 leafbio = table_to_struct(tab, 'leafbio');
 wpcf = table_to_struct(tab, 'sif');
 
-
 %% leaf reflectance - Fluspect
 canopy.nlayers  = 60;
 nl              = canopy.nlayers;
@@ -45,12 +44,12 @@ soilemp.film  = 0.015;     % empirical parameter (fixed) [water film optical thi
 soilspec.GSV  = optipar.GSV;
 soilspec.Kw   = optipar.Kw;
 soilspec.nw   = optipar.nw;
-
+if soilpar.SMC>1
+    soilpar.SMC = soilpar.SMC*1E-2; %this should be in fraction, not percentage
+end
 soil.refl = BSM(soilpar, soilspec, soilemp);
-%soil.refl(spectral.IwlT) = 0.06;
 
 %% canopy reflectance factors - RTMo
-
 canopy.x        = (-1/nl : -1/nl : -1)';         % a column vector
 canopy.xl       = [0; canopy.x];                 % add top level
 canopy.nlincl   = 13;
@@ -116,7 +115,7 @@ for k = 1:length(angles.tts)
     %  %rad(k) = radk; %#ok<AGROW>
       %% canopy fluorescence from PCA, in W m-2 sr-1
            SIFi= pcf * cell2mat(struct2cell(wpcf));
-           SIF_PCA(:,k) = interp1(640-399:850-399,SIFi,spectral.wlS,'linear',0);
+           SIF_PCA(:,k) = interp1(640:850,SIFi,spectral.wlS,'linear',0);
     %%    rad.SIF(:,k) = SIF(640-399:850-399);
 end
 
@@ -141,9 +140,14 @@ if ~minimize
     L2C.LCAR        = leafbio.Cca;
     L2C.LAI         = canopy.LAI;
 
-    L2C.LAIunc      = stdPar(strcmp(tab.variable,'LAI'));
-    L2C.LCCunc      = stdPar(strcmp(tab.variable,'Cab'));
-    L2C.LCARunc     = stdPar(strcmp(tab.variable,'Cca'));
+    tabp.value = demodify_parameters(p+stdPar, tab.variable(tab.include>0));
+    tabm.value = demodify_parameters(p-stdPar, tab.variable(tab.include>0));
+    i_lai = strcmp('LAI', tab.variable(tab.include));
+
+    %L2C.LAIunc      = stdPar(strcmp(tab.variable,'LAI'));
+    L2C.LAIunc      = abs(tabp.value(i_lai) - tabm.value(i_lai))/2;
+    L2C.LCCunc      = stdPar(strcmp(tab.variable(tab.include),'Cab'));
+    L2C.LCARunc     = stdPar(strcmp(tab.variable(tab.include),'Cca'));
     ep              = constants.A*ephoton(spectral.wlF'*1E-9,constants);
 
     FSCOPE          = leafbio.fqe * phi*1E-3.*ep.*(sigmaF.*L2C.APARchl)';
@@ -161,9 +165,21 @@ if ~minimize
 end
 
 %% calculate the difference between measured and modeled data
-er1 = (refl - measurement.refl - SIF_PCA./measurement.Ein)./measurement.sigmarefl;
-er1 = er1(~isnan(er1));
 
+%range1 = find(spectral.wlP>447 & spectral.wlP<493);
+%range2 = find(spectral.wlP>610 & spectral.wlP<690);
+%range3 = find(spectral.wlP>777 & spectral.wlP<893);
+
+%er11 = (mean(refl(range1,:)) - mean(measurement.refl(range1,:)- SIF_PCA(range1,:)./measurement.Ein(range1,:)));%./mean(measurement.sigmarefl(range1,:));
+%er12 = (mean(refl(range2,:)) - mean(measurement.refl(range2,:)- SIF_PCA(range2,:)./measurement.Ein(range2,:)));%./mean(measurement.sigmarefl(range2,:));
+%er13 = (mean(refl(range3,:)) - mean(measurement.refl(range3,:)- SIF_PCA(range3,:)./measurement.Ein(range3,:)));%./mean(measurement.sigmarefl(range3,:));
+
+%er1 = [er11; er12; er13];
+%er1
+er1 = (refl - measurement.refl- SIF_PCA./measurement.Ein);%./measurement.sigmarefl;
+%er1
+er1 = er1(~isnan(er1));
+%keyboard
 %% add extra weight from prior information
 prior.Apm = tab.x0(tab.include);
 prior.Aps = tab.uncertainty(tab.include);
@@ -172,6 +188,7 @@ er2 = (p - prior.Apm) ./ prior.Aps;
 %% total
 er = [er1(:); 3E-2* er2];
 
+%er'*er
 if minimize
     out = er;
 else
