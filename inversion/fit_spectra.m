@@ -17,11 +17,9 @@ params0 = tab.value(iparams);
 lb = tab.lower(iparams);
 ub = tab.upper(iparams);
 
-stoptol = 1E-4;  %
-%opt = optimset('MaxIter', 120, 'TolFun', stoptol, ...
-%               'DiffMinChange', 1E-4); % works for float32 input
-%                % 'Display', 'iter');
-opt = optimset('MaxIter', 100, 'TolFun', stoptol);%, 'DiffMinChange', 1E-4); % works for float32 input
+stoptol = 1E-6;  % we recommend e-6
+opt = optimset('MaxIter', 100, 'TolFun', stoptol, ...
+    'DiffMinChange', 1E-4); % works for float32 input
 % 'Display', 'iter');
 
 %% function minimization
@@ -41,7 +39,7 @@ xCov = inv(J'*J)* (Resnorm/(numel(FVAL)-numel(paramsout))); %#ok<MINV>
 
 Js = J(1:end-numel(paramsout),:);
 
-stdPar0 = inv(Js'*Js)*Js'*measurement.sigmarefl(:);
+stdPar0 = inv(Js'*Js)*Js'*measurement.sigmarefl(:); %#ok<MINV>
 stdPar1 = sqrt(diag(full(xCov)));
 stdPar = sqrt(stdPar0.^2 + stdPar1.^2);
 
@@ -55,7 +53,7 @@ tab.value(tab.include) = paramsout;
 f = @(params)COST_4SAIL_multiple(params, 0, measurement, tab, angles, ...
     spectral, optipar, pcf, atmo, meteo, constants,1,stdPar,method);
 
-[~, RSCOPE, L2C,FSCOPE] = f(paramsout);
+[~, RSCOPE, L2C,FSCOPE,er] = f(paramsout); %#ok<ASGLU>
 J2 = numericalJacobian(f,paramsout);
 
 varDiagnostic       = J2*xCov*J2';

@@ -1,4 +1,4 @@
-function [out, refl, L2C,FSCOPE] = COST_4SAIL_multiple(p, minimize, measurement, tab, angles, ...
+function [out, refl, L2C,FSCOPE,er] = COST_4SAIL_multiple(p, minimize, measurement, tab, angles, ...
     spectral, optipar, pcf, atmo, meteo, constants, calcnetflux,stdPar,method)
 
 % COST_4SAIL_my
@@ -81,7 +81,7 @@ for k = 1:length(angles.tts)
     refl(:, k) = rad.refl;
 
     if ~minimize
-        integr              = 'layers';
+        integr              = 'angles_and_layers';%'layers';
 
         Ps = gap.Ps(1:nl);
         Ph = (1-Ps);
@@ -110,14 +110,37 @@ for k = 1:length(angles.tts)
         %EoutFrc     = 1E-3*Sint(EoutFrc_,spectral.wlF);
         %EoutFrc_(EoutFrc_<.01) = NaN;
         L2C.sigmaF(:,k)      = pi*rad.LoF_./EoutFrc_;
+        %keyboard
+        % aPARh = rad.Pnh_Cab;
+        % aPARu = rad.Pnu_Cab;
+        % 
+        % Ih = ceil(aPARh/10);
+        % Iu = ceil(aPARu/10);
+        % I = 1:170;
+        % [histAPARh,histAPARu] = deal(zeros(length(I),1));
+        % for k = 1:length(aPARh)
+        %     histAPARh(Ih(k)) = histAPARh(Ih(k)) + (1-gap.Ps(k))/60;
+        % end
+        % 
+        % for k1 = 1:size(aPARu,1)
+        %     for k2 = 1:size(aPARu,2)
+        %         for k3 = 1:size(aPARu,3)
+        %             histAPARu(Iu(k1,k2,k3)) = histAPARu(Iu(k1,k2,k3)) + (gap.Ps(k3).*canopy.lidf(k1)/36/60);
+        %         end
+        %     end
+        % end
+
+
+
     end
 
     %  %rad(k) = radk; %#ok<AGROW>
-      %% canopy fluorescence from PCA, in W m-2 sr-1
-           SIFi= pcf * cell2mat(struct2cell(wpcf));
-           SIF_PCA(:,k) = interp1(640:850,SIFi,spectral.wlS,'linear',0);
+    %% canopy fluorescence from PCA, in W m-2 sr-1
+    
     %%    rad.SIF(:,k) = SIF(640-399:850-399);
 end
+SIFi= pcf * cell2mat(struct2cell(wpcf));
+SIF_PCA = interp1(640:850,SIFi,spectral.wlS,'linear',0);
 
 %% Biophysical data products FLEX ('L2C')
 if ~minimize
@@ -139,6 +162,7 @@ if ~minimize
     L2C.LCC         = leafbio.Cab;
     L2C.LCAR        = leafbio.Cca;
     L2C.LAI         = canopy.LAI;
+  %  L2C.histApar    = histAPARu+histAPARh;
 
     tabp.value = demodify_parameters(p+stdPar, tab.variable(tab.include>0));
     tabm.value = demodify_parameters(p-stdPar, tab.variable(tab.include>0));
@@ -153,13 +177,14 @@ if ~minimize
     FSCOPE          = leafbio.fqe * phi*1E-3.*ep.*(sigmaF.*L2C.APARchl)';
     %stdDiagn        = J2*xCov*J2';
     if isfield(measurement,'sif')
-       % for k = 1:length(measurement.t_all)
+        % for k = 1:length(measurement.t_all)
         sifintm         = Sint(measurement.sif,spectral.wlF);
         s_sifintm       = Sint(measurement.sif_unc,spectral.wlF);
         sifint          = Sint(FSCOPE,spectral.wlF);
         L2C.FQE       =  sifintm./sifint*leafbio.fqe;
-        L2C.FQE_unc   = L2C.FQE(k).*abs( (s_sifintm./sifintm));
-        % this is the contribution from SIF to the uncertainty.
+        %L2C.FQE_unc   = L2C.FQE(k).*abs( (s_sifintm./sifintm));
+        L2C.FQE_unc   = L2C.FQE.*abs( (s_sifintm./sifintm));
+% this is the contribution from SIF to the uncertainty.
         % Contribution from SCOPE inversion is added later (in fit_spectra)
     end
 end
@@ -177,6 +202,7 @@ end
 %er1 = [er11; er12; er13];
 %er1
 er1 = (refl - measurement.refl- SIF_PCA./measurement.Ein);%./measurement.sigmarefl;
+
 %er1
 er1 = er1(~isnan(er1));
 %keyboard
