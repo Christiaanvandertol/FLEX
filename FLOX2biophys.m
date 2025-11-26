@@ -75,6 +75,8 @@ VarNames        = A;
 for k = 1:length(VarNames)
     FLOX.(VarNames{k}) = VarValues(k);
 end
+spectral.wlPmin = FLOX.wlmin;
+spectral.wlPmax = FLOX.wlmax;
 
 %% 4. read the FLOX data
 Efiles          = dir([path_FLOXdata '*inc*rad*Full*']);
@@ -223,7 +225,7 @@ if ~isempty(J)
 
     % the option is an input, whether to do the retrieval for each spectrum
     % separately or for all at once. When all at once is chosen, it
-    % limits to 10 per day, taking an interpolation.
+    % limits to 11 per day, taking an interpolation.
     switch option
         case 0      % run for every spectrum separately
             uDoy = Doy;

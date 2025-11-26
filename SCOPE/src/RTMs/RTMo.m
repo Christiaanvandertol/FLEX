@@ -286,7 +286,6 @@ if options.calcnetflux
         Rnsun_PAR(j)   = 0.001 * Sint(Esun_(Ipar)'.*epsc(j,Ipar),wlPAR);
         Pnsun_Cab(j)   = 0.001 * Sint(e2phot(spectral.wlP*1E-9,kChlrel(j,:)'.*Esun_(spectral.IwlP).*epsc(j,spectral.IwlP)',constants),spectral.wlP);
         Pnsun_Car(j)   = 0.001 * Sint(e2phot(spectral.wlP*1E-9,kCarrel(j,:)'.*Esun_(spectral.IwlP).*epsc(j,spectral.IwlP)',constants),spectral.wlP);
-
     end
 
     %4.3 total direct radiation (incident and net) per leaf area (W m-2 leaf)

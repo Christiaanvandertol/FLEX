@@ -7,12 +7,12 @@ function [out, refl, L2C,FSCOPE,er] = COST_4SAIL_multiple(p, minimize, measureme
 
 %% create input structs from table
 tab.value(tab.include) = p;
-tab.value = demodify_parameters(tab.value, tab.variable);
+tab.value   = demodify_parameters(tab.value, tab.variable);
 
-soilpar = table_to_struct(tab, 'soil');
-canopy = table_to_struct(tab, 'canopy');
-leafbio = table_to_struct(tab, 'leafbio');
-wpcf = table_to_struct(tab, 'sif');
+soilpar     = table_to_struct(tab, 'soil');
+canopy      = table_to_struct(tab, 'canopy');
+leafbio     = table_to_struct(tab, 'leafbio');
+wpcf        = table_to_struct(tab, 'sif');
 
 %% leaf reflectance - Fluspect
 canopy.nlayers  = 60;
@@ -28,10 +28,10 @@ mly.pCw      = leafbio.Cw;
 mly.pCs      = leafbio.Cs;
 mly.pN       = leafbio.N;
 
-leafbio.V2Z = 0;
-leafbio.Cbc = 0;
-leafbio.Cp = 1;
-leafbio.fqe = 0.01;
+leafbio.V2Z  = 0;
+leafbio.Cbc  = 0;
+leafbio.Cp   = 1;
+leafbio.fqe  = 0.01;
 
 leafopt = fluspect_mSCOPE(mly,spectral,leafbio,optipar, nl);
 %leafopt.refl(:, spectral.IwlT) = 0.01;
@@ -133,12 +133,12 @@ for k = 1:length(angles.tts)
 
 
     end
-
     %  %rad(k) = radk; %#ok<AGROW>
     %% canopy fluorescence from PCA, in W m-2 sr-1
     
     %%    rad.SIF(:,k) = SIF(640-399:850-399);
 end
+
 SIFi= pcf * cell2mat(struct2cell(wpcf));
 SIF_PCA = interp1(640:850,SIFi,spectral.wlS,'linear',0);
 
@@ -162,6 +162,7 @@ if ~minimize
     L2C.LCC         = leafbio.Cab;
     L2C.LCAR        = leafbio.Cca;
     L2C.LAI         = canopy.LAI;
+    L2C.iPAR        = P;
   %  L2C.histApar    = histAPARu+histAPARh;
 
     tabp.value = demodify_parameters(p+stdPar, tab.variable(tab.include>0));
@@ -191,6 +192,7 @@ end
 
 %% calculate the difference between measured and modeled data
 
+range = find(spectral.wlP > spectral.wlPmin-1E6 & spectral.wlP < spectral.wlPmax+1E6);
 %range1 = find(spectral.wlP>447 & spectral.wlP<493);
 %range2 = find(spectral.wlP>610 & spectral.wlP<690);
 %range3 = find(spectral.wlP>777 & spectral.wlP<893);
@@ -201,7 +203,7 @@ end
 
 %er1 = [er11; er12; er13];
 %er1
-er1 = (refl - measurement.refl- SIF_PCA./measurement.Ein);%./measurement.sigmarefl;
+er1 = (refl(range,:) - measurement.refl(range,:)- SIF_PCA(range,:)./measurement.Ein(range,:));%./measurement.sigmarefl;
 
 %er1
 er1 = er1(~isnan(er1));
