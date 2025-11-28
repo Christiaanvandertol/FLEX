@@ -81,7 +81,11 @@ for k = 1:length(angles.tts)
     refl(:, k) = rad.refl;
 
     if ~minimize
-        integr              = 'angles_and_layers';%'layers';
+        if options.lite
+            integr              = 'layers';
+        else
+            integr              = 'angles_and_layers';%'layers';
+        end
 
         Ps = gap.Ps(1:nl);
         Ph = (1-Ps);

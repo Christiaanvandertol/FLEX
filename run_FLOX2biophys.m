@@ -1,8 +1,8 @@
 % this is an example of looping through FLOX input data.
 % the main code is 'FLOX2biophys
 
-direc = 'example input\';
-%direc = 'c:\users\tol\projects\FRM4FLUO\';
+%direc = 'example input\';
+direc = 'c:\users\tol\projects\FRM4FLUO\';
 
 subdir = dir([direc 'JB*']);
 

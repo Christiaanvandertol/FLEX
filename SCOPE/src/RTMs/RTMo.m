@@ -121,7 +121,9 @@ dx      = 1/nl;
 rho = leafopt.refl;
 tau = leafopt.tran;
 kChlrel = leafopt.kChlrel;
+%kChlrel(:,spectral.wlP>700) = 0; % GCOS definition, up to 700 nm!!
 kCarrel = leafopt.kCarrel;
+
 rs      =   soil.refl;          % [nwl,nsoils] soil reflectance spectra
 epsc    =   1-rho-tau;          % [nl,nwl]        emissivity of leaves
 epss    =   1-rs;              % [nwl]        emissivity of soil
@@ -468,7 +470,6 @@ end
 rad.Xdd     =   Xdd;
 rad.Xsd     = Xsd;
 rad.Xss     = Xss;
-
 % Rn = canopy.LAI*(meanleaf(canopy,rad.Rnhc,'layers',(1-Ps(1:nl)))+meanleaf(canopy,rad.Rnuc,'angles_and_layers',Ps(1:nl)))
 % %y1 = canopy.Cv*(rad.Eplu_(end,:)-rad.Eplu_(1,:) + rad.Emin_(1,:) - rad.Emin_(end,:));
 % y1 = canopy.Cv*(rad.Eplu_(end,:)-rad.Eplu_(1,:) + rad.Emin_(1,:) - rad.Emin_(end-1,:));
