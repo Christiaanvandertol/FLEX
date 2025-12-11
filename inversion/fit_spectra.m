@@ -49,7 +49,7 @@ tab.value(tab.include) = paramsout;
 
 %results.parameters = demodify_parameters(tab.value, tab.variable);
 
-%% best-fittiing spectra
+%% best-fitting spectra
 f = @(params)COST_4SAIL_multiple(params, 0, measurement, tab, angles, ...
     spectral, optipar, pcf, atmo, meteo, constants,1,stdPar,method);
 
@@ -59,9 +59,10 @@ J2 = numericalJacobian(f,paramsout);
 varDiagnostic       = J2*xCov*J2';
 stdDiagnostic       = sqrt(diag(varDiagnostic));
 %results.rad = rad;
-L2C.fAPAR_unc       = stdDiagnostic(1);
-L2C.fAPARchl_unc    = stdDiagnostic(2);
-L2C.APARchl_unc     = stdDiagnostic(2)*L2C.iPAR; %currently not considering the uncertainty in iPAR 
+L2C.fSunlit_unc       = stdDiagnostic(1);
+L2C.fAPAR_unc       = stdDiagnostic(2);
+L2C.fAPARchl_unc    = stdDiagnostic(3);
+L2C.APARchl_unc     = stdDiagnostic(3)*L2C.iPAR; %currently not considering the uncertainty in iPAR 
 if isfield(measurement,'sif')
     L2C.FQE_unc         = sqrt(L2C.FQE_unc.^2 + stdDiagnostic(3).^2);
 end

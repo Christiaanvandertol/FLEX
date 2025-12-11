@@ -64,6 +64,7 @@ options.lite = 1;
 options.calc_vert_profiles = 0;
 options.calcnetflux = calcnetflux;
 refl    = NaN*(ones(length(spectral.wlS),length(angles.tts)));
+fSunlit = NaN*(ones(length(angles.tts),1));
 %SIF     =  zeros(length(spectral.wlS),length(angles.tts));
 for k = 1:length(angles.tts)
     angles_i.tts = angles.tts(k);
@@ -72,7 +73,8 @@ for k = 1:length(angles.tts)
     % radk   = models.RTMo_lite(soil, leafopt, canopy, angles_i);
 
     [rad,gap] = RTMo(spectral,atmo,soil,leafopt,canopy,angles_i,constants,meteo,options);
-
+    fSunlit(k) = mean(gap.Ps(1:end-1));
+    
     % rad.rdd(:,k) = radk.rdd;
     % rad.rsd(:,k) = radk.rsd;
     % rad.rdo(:,k) = radk.rdo;
@@ -177,6 +179,7 @@ if ~minimize
     L2C.LAIunc      = abs(tabp.value(i_lai) - tabm.value(i_lai))/2;
     L2C.LCCunc      = stdPar(strcmp(tab.variable(tab.include),'Cab'));
     L2C.LCARunc     = stdPar(strcmp(tab.variable(tab.include),'Cca'));
+    L2C.fSunlit     = fSunlit;
     ep              = constants.A*ephoton(spectral.wlF'*1E-9,constants);
 
     FSCOPE          = leafbio.fqe * phi*1E-3.*ep.*(sigmaF.*L2C.APARchl)';
@@ -225,9 +228,9 @@ if minimize
     out = er;
 else
     if isfield(measurement,'sif')
-        out = [mean(L2C.fAPAR), mean(L2C.fAPARchl, 'omitnan'), mean(L2C.FQE, 'omitnan'), mean(L2C.sigmaF,2, 'omitnan')' ]';
+        out = [mean(L2C.fSunlit), mean(L2C.fAPAR), mean(L2C.fAPARchl, 'omitnan'), mean(L2C.FQE, 'omitnan'), mean(L2C.sigmaF,2, 'omitnan')',  ]';
     else
-        out = [mean(L2C.fAPAR), mean(L2C.fAPARchl, 'omitnan'), mean(L2C.sigmaF,2, 'omitnan')' ]';
+        out = [mean(L2C.fSunlit), mean(L2C.fAPAR), mean(L2C.fAPARchl, 'omitnan'), mean(L2C.sigmaF,2, 'omitnan')' ]';
     end
 end
 end

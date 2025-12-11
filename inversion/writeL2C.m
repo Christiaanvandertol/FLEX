@@ -1,7 +1,7 @@
 function writeL2C(filename,L2valdata)
 %%
 fid = fopen([filename 'fAPAR.csv'],'w');
-fprintf(fid,'%s,%s,%s,%s,%s,%s,\r\n','time','sza','fAPAR','fAPAR_unc','fAPARchl','fAPARchl_unc');
+fprintf(fid,'%s,%s,%s,%s,%s,%s,%s,%s\r\n','time','sza','fAPAR','fAPAR_unc','fAPARchl','fAPARchl_unc','fSunlit','fSunlit_unc');
 for k = 1:length(L2valdata)
     time = (L2valdata(k).results.L2biophys.t);
     for j = 1:length(L2valdata(k).results.L2biophys.fAPAR)
@@ -10,7 +10,9 @@ for k = 1:length(L2valdata)
             L2valdata(k).results.L2biophys.fAPAR(j), ...
             L2valdata(k).results.L2biophys.fAPAR_unc, ...
             L2valdata(k).results.L2biophys.fAPARchl(j), ...
-            L2valdata(k).results.L2biophys.fAPARchl_unc];
+            L2valdata(k).results.L2biophys.fAPARchl_unc,...
+            L2valdata(k).results.L2biophys.fSunlit(j),...
+            L2valdata(k).results.L2biophys.fSunlit_unc];
 
         %fprintf(fid,'%20s,%5.4f,%6.4f,%6.4f,%6.4,%6.4f\r\n',time(j,:),x);
         fprintf(fid,'%20s',time(j,:));
@@ -18,7 +20,6 @@ for k = 1:length(L2valdata)
             fprintf(fid,',%5.4f',x(z));
         end
          fprintf(fid,'\r\n');
-
     end
 end
 fclose(fid);
