@@ -76,7 +76,7 @@ end
 fclose(fid);
 
 
-if ~isfield(L2valdata(k).results.L2biophys, 'FQE')
+if isfield(L2valdata(k).results.L2biophys, 'FQE')
 fid = fopen([filename 'FQE.csv'],'w');
 fprintf(fid,'%s,%s,%s\r\n','time','FQE','FQE_unc');
 for k = 1:length(L2valdata)
