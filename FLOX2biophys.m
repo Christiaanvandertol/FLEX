@@ -67,13 +67,14 @@ numchar         = 2;
 tab             = readInputSheet(path_settings);
 
 % read the FLOX setup
-[A,B,~,~] = textread( [path_settings 'flox_setup.csv'], '%s %d %s %s' ,'delimiter' , ','); %#ok<DTXTRD>
+[A,B,C,~] = textread( [path_settings 'flox_setup.csv'], '%s %d %s %s' ,'delimiter' , ','); %#ok<DTXTRD>
 VarValues       = double(B);
 VarNames        = A;
-%VarDesription   = C;
+VarDescription   = C;
 %VarUnits        = D;
 for k = 1:length(VarNames)
     FLOX.(VarNames{k}) = VarValues(k);
+    FLOX.Name = VarDescription{1};
 end
 spectral.wlPmin = FLOX.wlmin;
 spectral.wlPmax = FLOX.wlmax;
@@ -307,6 +308,7 @@ if ~isempty(J)
             day(d).results(k).L2biophys.t = datestr(datenum(['1-Jan-' num2str(y(1))]) + uDoy(d) + x/24); %#ok<DATST,DATNM>
         end
         day(d).metadata=tab;
+        day(d).metadata.FLOX = FLOX;
     end
     Out = day;
 end

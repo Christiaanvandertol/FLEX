@@ -38,16 +38,16 @@ fclose(fid);
 %% FLOX metadata
 fid = fopen([filename 'FLOXsetup.csv'],'w');
 fprintf(fid,'%s,%s,%s,%s\r\n','FLOX_ID','FLOX_Name','LAT','LON');
-fprintf(fid,'%u,%s,%7.2f,%7.2f\n',L2valdata(k).metadata.FLOX.FLOX_ID,L2valdata(k).metadata.FLOX.Name,L2valdata(k).metadata.FLOX.lat,L2valdata(k).metadata.FLOX.lon);
+fprintf(fid,'%20s,%u,%7.2f,%7.2f\n',L2valdata(k).metadata.FLOX_ID,L2valdata(k).metadata.FLOX.Name,L2valdata(k).metadata.FLOX.LAT,L2valdata(k).metadata.FLOX.LON);
 fclose(fid);
 
 
 %% Biophysical variables
 fid = fopen([filename 'bio.csv'],'w');
-   fprintf(fid,'%s,%s,%s,%s,%s,%s,%s\r\n','time','LCC','LCC_unc','LCCAR','LCCAR_unc','LAI','LAI_unc');
+   fprintf(fid,'%s,%s,%s,%s,%s,%s,%s\r\n','time','LCC','LCC_unc','LCCAR','LCCAR_unc','LAR','LAI_unc');
 
 for k = 1:length(L2valdata)
-        time = (L2valdata(k).results.L2biophys.time_full);
+time = (L2valdata(k).results.L2biophys.time_full);
 
         fprintf(fid,'%20s,%7.2f,%7.2f,%7.2f,%7.2f,%7.2f,%7.2f\n',time(1,1:11),L2valdata(k).results.L2biophys.LCC,L2valdata.results.L2biophys.LCCunc, ...
             L2valdata(k).results.L2biophys.LCAR,L2valdata.results.L2biophys.LCARunc,...
@@ -73,7 +73,7 @@ fclose(fid);
 
 %% escape probability
 fid = fopen([filename 'fesc_unc.csv'],'w');
-fprintf(fid,'%s,%s\r\n','time','fesc_unc(spectrum,642:1:846nm)');
+fprintf(fid,'%s,%s,%s\r\n','time','fesc(spectrum,642:1:846nm)');
 for k = 1:length(L2valdata)
     time = (L2valdata(k).results.L2biophys.t);
     fprintf(fid,'%20s',time(1,:));

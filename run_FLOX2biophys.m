@@ -17,5 +17,13 @@ for k = 1:length(subdir)
         writeL2C(filename,L2valdata)
         save( [direc subdir(k).name '\' subsubdir(j).name '\' subdir(k).name '_' subsubdir(j).name '_L2valdata.mat'],'L2valdata')
         save( ['output\' subdir(k).name '_' subsubdir(j).name '_L2valdata.mat'],'L2valdata')
-    end
+    end    
 end
+
+% I decided to do the matchup separately, to finish here and load the files
+% for matchup later. This is to:
+% (1) some users may only want to run this without doing the satellite
+% valiation
+% (2) to make it easier to translate only the matchup to Python and keep
+% this part in Octave.
+
