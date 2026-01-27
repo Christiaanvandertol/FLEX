@@ -2,7 +2,7 @@
 % the main code is 'FLOX2biophys
 
 direc = 'example input\';
-%direc = 'c:\users\tol\projects\FRM4FLUO\';
+%direc = 'c:\users\tol\projects\FRM4FLUO\version2\';
 
 subdir = dir([direc 'JB*']);
 

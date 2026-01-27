@@ -39,7 +39,7 @@ xCov = inv(J'*J)* (Resnorm/(numel(FVAL)-numel(paramsout))); %#ok<MINV>
 
 Js = J(1:end-numel(paramsout),:);
 
-stdPar0 = inv(Js'*Js)*Js'*measurement.sigmarefl(:); %#ok<MINV>
+stdPar0 = inv(Js'*Js)*Js'*measurement.sigmarefl(:); %#ok<MINV>s
 stdPar1 = sqrt(diag(full(xCov)));
 stdPar = sqrt(stdPar0.^2 + stdPar1.^2);
 
@@ -60,13 +60,14 @@ varDiagnostic       = J2*xCov*J2';
 stdDiagnostic       = sqrt(diag(varDiagnostic));
 %results.rad = rad;
 L2C.fSunlit_unc       = stdDiagnostic(1);
-L2C.fAPAR_unc       = stdDiagnostic(2);
-L2C.fAPARchl_unc    = stdDiagnostic(3);
-L2C.APARchl_unc     = stdDiagnostic(3)*L2C.iPAR; %currently not considering the uncertainty in iPAR 
+L2C.fSunlit_aPARchl_unc  = stdDiagnostic(2);
+L2C.fAPAR_unc       = stdDiagnostic(3);
+L2C.fAPARchl_unc    = stdDiagnostic(4);
+L2C.APARchl_unc     = stdDiagnostic(4)*L2C.iPAR; %currently not considering the uncertainty in iPAR 
 if isfield(measurement,'sif')
     L2C.FQE_unc         = sqrt(L2C.FQE_unc.^2 + stdDiagnostic(3).^2);
 end
-L2C.sigmaF_unc      = stdDiagnostic(3+isfield(measurement,'sif'):end);
+L2C.sigmaF_unc      = stdDiagnostic(4+isfield(measurement,'sif'):end);
 
 results.L2biophys         = L2C;
 results.FSCOPE      = FSCOPE;

@@ -254,15 +254,19 @@ if ~isempty(J)
                 day(d).measurement.tts_all = angles.tts(I);
                 if length(I)>10     % if more than 10 measurements available on this day
                     [~,J] = sort(Doy(I));
-                    Interval = (t(I(J(1))): (t(I(J(end)))-t(I(J(1))))/10 :t(I(J(end))))';
+
+                    tnoisy = t(I(J))+rand(length(J),1)/86400/2; % add up to +/- 0.5 sec to prevent non-unique time stamps
+                    %Interval = (t(I(J(1))): (t(I(J(end)))-t(I(J(1))))/10 :t(I(J(end))))';
+                    Interval = (tnoisy(1): (tnoisy(end)-tnoisy(1))/10 :tnoisy(end))';
                     x = movmean(refl(:,I(J)),floor(length(I))/10,2);
-                    day(d).measurement.refl = (interp1(t(I(J)), x', Interval))';
+                    
+                    day(d).measurement.refl = (interp1(tnoisy, x', Interval))';
                     x = movmean(refl_unc(:,I(J)).^2,floor(length(I))/10,2);
-                    day(d).measurement.sigmarefl = sqrt((interp1(t(I(J)), x', Interval))');
+                    day(d).measurement.sigmarefl = sqrt((interp1(tnoisy, x', Interval))');
                     x = movmean(Ein(:,I(J)),floor(length(I))/10,2);
-                    day(d).measurement.Ein = (interp1(t(I(J)), x', Interval))';
-                    day(d).angles.tts = interp1(t(I(J)), angles.tts(I(J)), Interval);
-                    day(d).angles.psi = interp1(t(I(J)), angles.psi(I(J)), Interval);
+                    day(d).measurement.Ein = (interp1(tnoisy, x', Interval))';
+                    day(d).angles.tts = interp1(tnoisy, angles.tts(I(J)), Interval);
+                    day(d).angles.psi = interp1(tnoisy, angles.psi(I(J)), Interval);
                     day(d).angles.tto = repmat(angles.tto(1),length(Interval),1); % this doesn't change
                     day(d).angles.time = (Interval-floor(Interval))*24;
                     if calcFQE

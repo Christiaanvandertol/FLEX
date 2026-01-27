@@ -74,7 +74,7 @@ for k = 1:length(angles.tts)
 
     [rad,gap] = RTMo(spectral,atmo,soil,leafopt,canopy,angles_i,constants,meteo,options);
     fSunlit(k) = mean(gap.Ps(1:end-1));
-    
+
     % rad.rdd(:,k) = radk.rdd;
     % rad.rsd(:,k) = radk.rsd;
     % rad.rdo(:,k) = radk.rdo;
@@ -105,6 +105,7 @@ for k = 1:length(angles.tts)
         %L2C.fAPARchl(k)     = canopy.Pntot_Cab./P; %#ok<*AGROW>
         L2C.fAPARchl(k)     = canopy.Pntot_Cab./rad.PAR; %#ok<*AGROW>
         L2C.fAPAR(k)        = canopy.Pntot./rad.PAR; %#ok<*AGROW>
+        L2C.fSunlit_aPARchl(k) = canopy.Pnsun_Cab./(canopy.Pnsun_Cab+canopy.Pnsha_Cab);
 
         etau            = 1+0*rad.Pnu;
         etah            = 1+0*rad.Pnh;
@@ -228,9 +229,9 @@ if minimize
     out = er;
 else
     if isfield(measurement,'sif')
-        out = [mean(L2C.fSunlit), mean(L2C.fAPAR), mean(L2C.fAPARchl, 'omitnan'), mean(L2C.FQE, 'omitnan'), mean(L2C.sigmaF,2, 'omitnan')',  ]';
+        out = [mean(L2C.fSunlit), mean(L2C.fSunlit_aPARchl), mean(L2C.fAPAR), mean(L2C.fAPARchl, 'omitnan'), mean(L2C.FQE, 'omitnan'), mean(L2C.sigmaF,2, 'omitnan')',  ]';
     else
-        out = [mean(L2C.fSunlit), mean(L2C.fAPAR), mean(L2C.fAPARchl, 'omitnan'), mean(L2C.sigmaF,2, 'omitnan')' ]';
+        out = [mean(L2C.fSunlit), mean(L2C.fSunlit_aPARchl), mean(L2C.fAPAR), mean(L2C.fAPARchl, 'omitnan'), mean(L2C.sigmaF,2, 'omitnan')' ]';
     end
 end
 end
