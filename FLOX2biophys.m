@@ -123,7 +123,10 @@ for fileno = 1:length(Efiles)
     end
 
     [wl, Ei, ti]        = readFXbox(Efilename,numchar,formati);
+    Ei(Ei<-1000) = NaN;
+    
     [~, piLi]           = readFXbox(Lfilename,numchar,formati);
+    piLi(piLi<-1000) = NaN;
     if ~isempty(ufiles)
         [~, r_unci]        = readFXbox(ufilename,numchar,formati);
         r_unc   = [r_unc r_unci];
@@ -157,6 +160,7 @@ else
     calcFQE = 0; % uncomment following lines for debugging only
 end
 r               = piL./E; % reflectance
+
 r(r<0)          = NaN; % filtering, this is useful at at the edges of the spectrum or in low light conditions
 r(r>1)          = NaN;
 if isempty(r_unc)
@@ -164,7 +168,7 @@ if isempty(r_unc)
 end
 
 I       = isnan(r);
-J       = find(sum(I)<50);
+J       = find(sum(I)<210);
 if length(J)<size(I,2)
     warning(['dataset contains ' num2str(size(I,2)-length(J)) ' poor quality spectra'])
 end
