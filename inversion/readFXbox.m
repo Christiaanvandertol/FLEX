@@ -39,7 +39,7 @@ else
     %keyboard
     z = sscanf(line,format);
     fclose('all');
-    %hr = z(7:8:end);
+    %hr = z(7:8:end);z(1
     %minute = z(9:8:end);
     %sec = z(11:8:end);
 
@@ -82,6 +82,13 @@ else
                 hr      = z(ID(4):14:end);
                 minute      = z(ID(5):14:end);
                 sec      = z(ID(6):14:end);
+                if(max(mon))>12
+                    m1= mon;
+                    m2 = z(ID(2)+1:14:end);
+                    m3 = z(ID(2)+2:14:end);
+                    mon = char([m1 m2 m3]);
+                    mon = month(datetime(mon,'InputFormat','MMM')); 
+                end
         end
 
 

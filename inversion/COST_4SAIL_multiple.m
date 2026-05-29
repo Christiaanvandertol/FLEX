@@ -187,9 +187,10 @@ if ~minimize
     %stdDiagn        = J2*xCov*J2';
     if isfield(measurement,'sif')
         % for k = 1:length(measurement.t_all)
-        sifintm         = Sint(measurement.sif,spectral.wlF);
-        s_sifintm       = Sint(measurement.sif_unc,spectral.wlF);
-        sifint          = Sint(FSCOPE,spectral.wlF);
+        I = find(~isnan(mean(measurement.sif,2, 'omitnan'))); % select wavelengths for which we have a measurement
+        sifintm         = Sint(measurement.sif(I,:),spectral.wlF(I));
+        s_sifintm       = Sint(measurement.sif_unc(I,:),spectral.wlF(I));
+        sifint          = Sint(FSCOPE(I,:)',spectral.wlF(:,I)');
         L2C.FQE       =  sifintm./sifint*leafbio.fqe;
         %L2C.FQE_unc   = L2C.FQE(k).*abs( (s_sifintm./sifintm));
         L2C.FQE_unc   = L2C.FQE.*abs( (s_sifintm./sifintm));
@@ -214,7 +215,10 @@ range = find(spectral.wlP > spectral.wlPmin-1E6 & spectral.wlP < spectral.wlPmax
 er1 = (refl(range,:) - measurement.refl(range,:)- SIF_PCA(range,:)./measurement.Ein(range,:));%./measurement.sigmarefl;
 
 %er1
-er1 = er1(~isnan(er1));
+%er1 = er1(~isnan(er1));
+er1(isnan(er1)) = 1; % take care with this, could jeopardize the minimization.
+
+
 %keyboard
 %% add extra weight from prior information
 prior.Apm = tab.x0(tab.include);
@@ -223,7 +227,6 @@ er2 = (p - prior.Apm) ./ prior.Aps;
 
 %% total
 er = [er1(:); 3E-2* er2];
-
 %er'*er
 if minimize
     out = er;
